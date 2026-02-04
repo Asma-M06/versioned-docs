@@ -7,6 +7,7 @@ from app.crud import create_document_version
 from app.crud import get_latest_version
 from app.crud import get_all_versions
 from app.crud import get_specific_version
+from app.crud import get_version_content,diff_versions
 
 app = FastAPI()
 
@@ -52,3 +53,24 @@ def get_version(document_id:str, version_number:int):
     if result is None :
         return {"error": "Version not found."}
     return result
+
+@app.get("/documents/{document_id}/diff")
+def diff_document_version(
+    document_id:str,
+    from_version:int,
+    to_version:int
+):
+    content_a = get_version_content(document_id, from_version)
+    content_b = get_version_content(document_id, to_version)
+
+    if content_a is None or content_b is None:
+        return {"error": "One or both versions not found."}
+
+    diff =  diff_versions(content_a, content_b)
+
+    return {
+        "document_id": document_id,
+        "from_version": from_version,
+        "to_version": to_version,
+        "diff": diff
+    }

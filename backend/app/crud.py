@@ -1,3 +1,4 @@
+import difflib
 from uuid import uuid4
 from app.db import get_connection
 
@@ -110,3 +111,37 @@ def get_specific_version(document_id:str,version_number:int):
         "content": row[1],        
         "created_at": row[2]
     }
+
+def diff_versions(content_a:str,content_b:str):
+    a_lines = content_a.splitlines()
+    b_lines = content_b.splitlines()
+
+    diff = difflib.unified_diff(
+        a_lines,
+        b_lines,
+        lineterm='',
+        fromfile='Version a',
+        tofile='Version b'
+    )
+
+    return '\n'.join(diff)
+
+def get_version_content(document_id:str, version_number:int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT content
+        FROM document_versions
+        WHERE document_id = %s AND version_number = %s
+        """,(document_id,version_number),
+    )
+
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row is None:
+        return None
+    
+    return row[0]
